@@ -12,8 +12,8 @@ public class SensorEvent {
 
     private float humidityPercentage;
     private long windSpeedInMPH;
-    private float pressureinIN;
-    private float temperatureinCelcius;
+    private float pressureInAtm;
+    private float temperatureInCelcius;
 
     public String getEventId() {
         return eventId;
@@ -79,20 +79,20 @@ public class SensorEvent {
         this.windSpeedInMPH = windSpeedInMPH;
     }
 
-    public float getPressureinIN() {
-        return pressureinIN;
+    public float getPressureInAtm() {
+        return pressureInAtm;
     }
 
-    public void setPressureinIN(float pressureinIN) {
-        this.pressureinIN = pressureinIN;
+    public void setPressureInAtm(float pressureInAtm) {
+        this.pressureInAtm = pressureInAtm;
     }
 
-    public float getTemperatureinCelcius() {
-        return temperatureinCelcius;
+    public float getTemperatureInCelcius() {
+        return temperatureInCelcius;
     }
 
-    public void setTemperatureinCelcius(float temperatureinCelcius) {
-        this.temperatureinCelcius = temperatureinCelcius;
+    public void setTemperatureInCelcius(float temperatureInCelcius) {
+        this.temperatureInCelcius = temperatureInCelcius;
     }
 
     @Override

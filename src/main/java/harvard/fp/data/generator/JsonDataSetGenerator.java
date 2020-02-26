@@ -101,7 +101,7 @@ public class JsonDataSetGenerator {
             event.setHumidityPercentage(humidity.floatValue());
 
             event.setWindSpeedInMPH(ThreadLocalRandom.current().nextInt(0,85));
-            event.setTemperatureinCelcius(ThreadLocalRandom.current().nextInt(-20,50));
+            event.setTemperatureInCelcius(ThreadLocalRandom.current().nextInt(-20,50));
 
             writer.write(OBJECT_MAPPER.writeValueAsString(event));
             writer.newLine();
