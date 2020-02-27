@@ -56,3 +56,7 @@ application {
     // Define the main class for the application.
     mainClassName = 'harvard.fp.data.App'
 }
+run {
+    // support passing -Dsystem.property=value to bootRun task
+    systemProperties = System.properties
+}

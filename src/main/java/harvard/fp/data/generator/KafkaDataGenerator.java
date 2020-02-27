@@ -26,6 +26,10 @@ public class KafkaDataGenerator {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final Instant DEFAULT_START_DATE = Instant.now().truncatedTo(ChronoUnit.DAYS);
     public static final String DEFAULT_DAYS = "7";
+    public static final String DEFAULT_TEST_TOPIC = "test";
+    public static final String DEFAULT_KAFKA_URL = "localhost:9092";
+    private String kafkaTopic ;
+    private String kafkaUrl ;
     Set<String> sensorIdList = FileReader.readAllValuesFile("input/sensor-id.txt");
     String[] sensorIdArray, sensorTypeArray, windDirectionArray, zipCodeArray;
 
@@ -50,7 +54,9 @@ public class KafkaDataGenerator {
         daysInMillis = TimeUnit.DAYS.toMillis(numberOfDaysRange);
 
         String outputDirectory = System.getProperty("output_dir","src/main/resources/output");
-        kafkaProducer = new MessageProducer("localhost:9092", "test_topic");
+        kafkaTopic = System.getProperty("kafka_topic", DEFAULT_TEST_TOPIC);
+        kafkaUrl = System.getProperty("kafka_url", DEFAULT_KAFKA_URL);
+        kafkaProducer = new MessageProducer(kafkaUrl, kafkaTopic);
     }
 
     private void validateStartParameters(String startDateAsEpochString, String endDaysFromStartString) {
@@ -101,7 +107,7 @@ public class KafkaDataGenerator {
             event.setWindSpeedInMPH(ThreadLocalRandom.current().nextInt(0,85));
             event.setTemperatureInCelcius(ThreadLocalRandom.current().nextInt(-20,50));
 
-            kafkaProducer.sendMessage("test_topic", SensorEventParser.getSensorEventAsJsonString(event));
+            kafkaProducer.sendMessage(kafkaTopic, SensorEventParser.getSensorEventAsJsonString(event));
         }
     }
 
