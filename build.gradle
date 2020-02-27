@@ -21,7 +21,20 @@ repositories {
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
 }
-
+ext {
+    slf4j_version = '1.7.29'
+    logback_version = '1.2.3'
+}
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.name == 'log4j') {
+            details.useTarget "org.slf4j:log4j-over-slf4j:$slf4j_version"
+        }
+        if (details.requested.name == 'commons-logging') {
+            details.useTarget "org.slf4j:jcl-over-slf4j:$slf4j_version"
+        }
+    }
+}
 dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:28.1-jre'
@@ -30,6 +43,10 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.10.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
     implementation 'org.apache.commons:commons-lang3:3.9'
+    implementation 'org.apache.kafka:kafka-clients:2.4.0'
+
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
+    implementation group: 'ch.qos.logback', name: 'logback-core', version: logback_version
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'

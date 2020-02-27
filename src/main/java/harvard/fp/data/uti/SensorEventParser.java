@@ -7,11 +7,11 @@ import harvard.fp.data.model.SensorEvent;
 public class SensorEventParser {
     private static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public SensorEvent getSensorEventFromString(String sensorEventAsString) throws JsonProcessingException {
+    public static SensorEvent getSensorEventFromString(String sensorEventAsString) throws JsonProcessingException {
         return OBJECT_MAPPER.readValue(sensorEventAsString, SensorEvent.class);
     }
 
-    public String getSensorEventAsJsonString(SensorEvent sensorEvent) throws JsonProcessingException {
+    public static String getSensorEventAsJsonString(SensorEvent sensorEvent) throws JsonProcessingException {
         return OBJECT_MAPPER.writeValueAsString(sensorEvent);
     }
 }

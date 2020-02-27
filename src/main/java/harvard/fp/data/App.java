@@ -4,13 +4,14 @@
 package harvard.fp.data;
 
 import harvard.fp.data.generator.JsonDataSetGenerator;
+import harvard.fp.data.generator.KafkaDataGenerator;
 
 import java.io.IOException;
 
 public class App {
 
     public static void main(String[] args) throws IOException {
-        JsonDataSetGenerator dataGenerator = new JsonDataSetGenerator();
+        KafkaDataGenerator dataGenerator = new KafkaDataGenerator();
         dataGenerator.generateData();
     }
 }

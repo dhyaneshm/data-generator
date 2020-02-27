@@ -1,8 +1,10 @@
 package harvard.fp.data.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import harvard.fp.data.kafka.MessageProducer;
 import harvard.fp.data.model.SensorEvent;
 import harvard.fp.data.uti.FileReader;
+import harvard.fp.data.uti.SensorEventParser;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedWriter;
@@ -20,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  * Randomly picks sample data from input directory and generates sensor events in json format
  * to output directory
  */
-public class JsonDataSetGenerator {
+public class KafkaDataGenerator {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final Instant DEFAULT_START_DATE = Instant.now().truncatedTo(ChronoUnit.DAYS);
     public static final String DEFAULT_DAYS = "7";
@@ -34,10 +36,10 @@ public class JsonDataSetGenerator {
     Set<String> zipCodeList = FileReader.readAllValuesFile("input/zipcode.txt");
 
     Instant dayBeginningEpoch = Instant.now().truncatedTo(ChronoUnit.DAYS);
-    BufferedWriter writer = null ;
+    MessageProducer kafkaProducer = null ;
     int numberOfDaysRange ;
     long daysInMillis;
-    public JsonDataSetGenerator() {
+    public KafkaDataGenerator() {
         sensorIdArray =  sensorIdList.stream().toArray(String[]::new);
         sensorTypeArray =  sensorTypeList.stream().toArray(String[]::new);
         zipCodeArray =  zipCodeList.stream().toArray(String[]::new);
@@ -48,11 +50,7 @@ public class JsonDataSetGenerator {
         daysInMillis = TimeUnit.DAYS.toMillis(numberOfDaysRange);
 
         String outputDirectory = System.getProperty("output_dir","src/main/resources/output");
-        try {
-            writer = new BufferedWriter(new FileWriter(outputDirectory + "/output.json"));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        kafkaProducer = new MessageProducer("localhost:9092", "test_topic");
     }
 
     private void validateStartParameters(String startDateAsEpochString, String endDaysFromStartString) {
@@ -103,13 +101,8 @@ public class JsonDataSetGenerator {
             event.setWindSpeedInMPH(ThreadLocalRandom.current().nextInt(0,85));
             event.setTemperatureInCelcius(ThreadLocalRandom.current().nextInt(-20,50));
 
-            writer.write(OBJECT_MAPPER.writeValueAsString(event));
-            writer.newLine();
-            if(i %10 == 0){
-                writer.flush();
-            }
+            kafkaProducer.sendMessage("test_topic", SensorEventParser.getSensorEventAsJsonString(event));
         }
-        writer.flush();
     }
 
 }
