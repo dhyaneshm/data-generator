@@ -30,6 +30,8 @@ public class KafkaDataGenerator {
     public static final String DEFAULT_KAFKA_URL = "localhost:9092";
     private String kafkaTopic ;
     private String kafkaUrl ;
+    private String streamingFlag;
+    private Integer streamingIntervalMin;
     Set<String> sensorIdList = FileReader.readAllValuesFile("input/sensor-id.txt");
     String[] sensorIdArray, sensorTypeArray, windDirectionArray, zipCodeArray;
 
@@ -43,6 +45,8 @@ public class KafkaDataGenerator {
     MessageProducer kafkaProducer = null ;
     int numberOfDaysRange ;
     long daysInMillis;
+    private int numberOfEvents;
+
     public KafkaDataGenerator() {
         sensorIdArray =  sensorIdList.stream().toArray(String[]::new);
         sensorTypeArray =  sensorTypeList.stream().toArray(String[]::new);
@@ -52,11 +56,15 @@ public class KafkaDataGenerator {
         String endDaysFromStartString = System.getProperty("end_no_days_from_start", DEFAULT_DAYS);
         validateStartParameters(startDateAsEpochString, endDaysFromStartString);
         daysInMillis = TimeUnit.DAYS.toMillis(numberOfDaysRange);
-
-        String outputDirectory = System.getProperty("output_dir","src/main/resources/output");
+        String noOfEventsString = System.getProperty("no_of_events", "500");
+        streamingFlag = System.getProperty("streaming", "y");
+        String streamingIntervalString = System.getProperty("streaming_interval_min", "5");
+        numberOfEvents = Integer.parseInt(noOfEventsString);
+        streamingIntervalMin = Integer.parseInt(streamingIntervalString);
         kafkaTopic = System.getProperty("kafka_topic", DEFAULT_TEST_TOPIC);
         kafkaUrl = System.getProperty("kafka_url", DEFAULT_KAFKA_URL);
         kafkaProducer = new MessageProducer(kafkaUrl, kafkaTopic);
+        Runtime.getRuntime().addShutdownHook(new Thread(kafkaProducer::closeProducer));
     }
 
     private void validateStartParameters(String startDateAsEpochString, String endDaysFromStartString) {
@@ -78,37 +86,50 @@ public class KafkaDataGenerator {
         }
     }
 
-    public void generateData() throws IOException {
-        for(int i=0;i<500;i++){
-            SensorEvent event = new SensorEvent();
+    public void generateData() throws IOException, InterruptedException {
+        do{
+            for(int i = 0; i< numberOfEvents; i++){
+                SensorEvent event = new SensorEvent();
 
-            event.setEventId(UUID.randomUUID().toString());
-            long randomEventTimestampWithinRange = dayBeginningEpoch.toEpochMilli() + ThreadLocalRandom.current().nextLong(0, daysInMillis);
-            event.setEventTimestamp(randomEventTimestampWithinRange);
+                event.setEventId(UUID.randomUUID().toString());
+                long randomEventTimestampWithinRange = dayBeginningEpoch.toEpochMilli() + ThreadLocalRandom.current().nextLong(0, daysInMillis);
+                event.setEventTimestamp(randomEventTimestampWithinRange);
 
-            int sensorIdRandomIndex = ThreadLocalRandom.current().nextInt(0, sensorIdList.size());
-            event.setSensorId(sensorIdArray[sensorIdRandomIndex]);
+                int sensorIdRandomIndex = ThreadLocalRandom.current().nextInt(0, sensorIdList.size());
+                event.setSensorId(sensorIdArray[sensorIdRandomIndex]);
 
-            int sensorTypeRandomIndex = ThreadLocalRandom.current().nextInt(0, sensorTypeList.size());
-            event.setSensorType(sensorTypeArray[sensorTypeRandomIndex]);
+                int sensorTypeRandomIndex = ThreadLocalRandom.current().nextInt(0, sensorTypeList.size());
+                event.setSensorType(sensorTypeArray[sensorTypeRandomIndex]);
 
-            int windDirectionRandomIndex = ThreadLocalRandom.current().nextInt(0, windDirectionList.size());
-            event.setWindDirection(windDirectionArray[windDirectionRandomIndex]);
+                int windDirectionRandomIndex = ThreadLocalRandom.current().nextInt(0, windDirectionList.size());
+                event.setWindDirection(windDirectionArray[windDirectionRandomIndex]);
 
-            int zipCodeRandomIndex = ThreadLocalRandom.current().nextInt(0, zipCodeList.size());
-            String zipCode = zipCodeArray[zipCodeRandomIndex];
-            zipCode = StringUtils.stripStart(zipCode, "\"");
-            zipCode = StringUtils.stripEnd(zipCode, "\"");
-            event.setZipCode(zipCode);
+                int zipCodeRandomIndex = ThreadLocalRandom.current().nextInt(0, zipCodeList.size());
+                String zipCode = zipCodeArray[zipCodeRandomIndex];
+                zipCode = StringUtils.stripStart(zipCode, "\"");
+                zipCode = StringUtils.stripEnd(zipCode, "\"");
+                event.setZipCode(zipCode);
 
-            Double humidity = ThreadLocalRandom.current().nextDouble(50.0, 90.0);
-            event.setHumidityPercentage(humidity.floatValue());
+                Double humidity = ThreadLocalRandom.current().nextDouble(50.0, 90.0);
+                event.setHumidityPercentage(humidity.floatValue());
 
-            event.setWindSpeedInMPH(ThreadLocalRandom.current().nextInt(0,85));
-            event.setTemperatureInCelcius(ThreadLocalRandom.current().nextInt(-20,50));
+                event.setWindSpeedInMPH(ThreadLocalRandom.current().nextInt(0,85));
+                event.setTemperatureInCelcius(ThreadLocalRandom.current().nextInt(-20,50));
 
-            kafkaProducer.sendMessage(kafkaTopic, SensorEventParser.getSensorEventAsJsonString(event));
-        }
+                kafkaProducer.sendMessage(kafkaTopic, SensorEventParser.getSensorEventAsJsonString(event));
+            }
+            if(streamingFlag.equalsIgnoreCase("y")){
+                System.out.println("******************Waiting for  "+ streamingIntervalMin +" minutes before ir can produce again ******************" );
+                TimeUnit.MINUTES.sleep(streamingIntervalMin);
+            }
+
+        }while (streamingFlag.equalsIgnoreCase("y"));
+
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        KafkaDataGenerator dataGenerator = new KafkaDataGenerator();
+        dataGenerator.generateData();
     }
 
 }

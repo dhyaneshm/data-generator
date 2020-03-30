@@ -44,6 +44,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
     implementation 'org.apache.commons:commons-lang3:3.9'
     implementation 'org.apache.kafka:kafka-clients:2.4.0'
+    implementation 'org.apache.kafka:kafka-streams:2.4.0'
 
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
     implementation group: 'ch.qos.logback', name: 'logback-core', version: logback_version
@@ -59,4 +60,20 @@ application {
 run {
     // support passing -Dsystem.property=value to bootRun task
     systemProperties = System.properties
+}
+
+task runMessageProducer(type: JavaExec) {
+    systemProperties = System.properties
+    group = "Execution"
+    description = "Runs kafka message producer"
+    classpath = sourceSets.main.runtimeClasspath
+    main = "harvard.fp.data.generator.KafkaDataGenerator"
+}
+
+task runConsumerStream(type: JavaExec) {
+    systemProperties = System.properties
+    group = "Execution"
+    description = "Runs kafka streams"
+    classpath = sourceSets.main.runtimeClasspath
+    main = "harvard.fp.data.kafka.ConsumerStreams"
 }

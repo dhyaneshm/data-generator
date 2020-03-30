@@ -51,4 +51,8 @@ public class MessageProducer {
         String messageKey = String.valueOf(eventBody.hashCode());
         sendMessageByKey(destinationTopic, messageKey, eventBody);
     }
+
+    public void closeProducer(){
+        producer.close();
+    }
 }
