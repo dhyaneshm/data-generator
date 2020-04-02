@@ -41,26 +41,32 @@ services:
 #    networks:
 #      - kafka-demo
 
+  data-generator:
+    image: data-generator-build-image
+    build:
+      context: ..
+      dockerfile: Dockerfile
+
   java-message-producer:
-    image: adoptopenjdk/openjdk11
+    image: data-generator-build-image
     networks:
       - kafka-demo
     volumes:
       - "../:/data-generator"
-    working_dir: /data-generator
-    command: './gradlew clean assemble runMessageProducer -Dkafka_url=kafka:9092 -Dkafka_topic=input_topic -Dno_of_events=100 -Dstreaming=y -Dstreaming_interval_min=2 --no-daemon'
+    working_dir: /usr/local/data-generator
+    command: './gradlew runMessageProducer -Dkafka_url=kafka:9092 -Dkafka_topic=input_topic -Dno_of_events=100 -Dstreaming=y -Dstreaming_interval_sec=20 --no-daemon'
     depends_on:
       - zookeeper
       - kafka
 
   java-message-consumer:
-    image: adoptopenjdk/openjdk11
+    image: data-generator-build-image
     networks:
       - kafka-demo
     volumes:
       - "../:/data-generator"
-    working_dir: /data-generator
-    command: './gradlew clean assemble runConsumerStream -Dkafka_url=kafka:9092 -Dkafka_topic=input_topic --no-daemon'
+    working_dir: /usr/local/data-generator
+    command: './gradlew runConsumerStream -Dkafka_url=kafka:9092 -Dkafka_topic=input_topic --no-daemon'
     depends_on:
       - zookeeper
       - kafka

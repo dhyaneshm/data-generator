@@ -7,10 +7,7 @@ import harvard.fp.data.uti.FileReader;
 import harvard.fp.data.uti.SensorEventParser;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
@@ -31,7 +28,7 @@ public class KafkaDataGenerator {
     private String kafkaTopic ;
     private String kafkaUrl ;
     private String streamingFlag;
-    private Integer streamingIntervalMin;
+    private Integer streamingIntervalSec;
     Set<String> sensorIdList = FileReader.readAllValuesFile("input/sensor-id.txt");
     String[] sensorIdArray, sensorTypeArray, windDirectionArray, zipCodeArray;
 
@@ -58,9 +55,9 @@ public class KafkaDataGenerator {
         daysInMillis = TimeUnit.DAYS.toMillis(numberOfDaysRange);
         String noOfEventsString = System.getProperty("no_of_events", "500");
         streamingFlag = System.getProperty("streaming", "y");
-        String streamingIntervalString = System.getProperty("streaming_interval_min", "5");
+        String streamingIntervalString = System.getProperty("streaming_interval_sec", "10");
         numberOfEvents = Integer.parseInt(noOfEventsString);
-        streamingIntervalMin = Integer.parseInt(streamingIntervalString);
+        streamingIntervalSec = Integer.parseInt(streamingIntervalString);
         kafkaTopic = System.getProperty("kafka_topic", DEFAULT_TEST_TOPIC);
         kafkaUrl = System.getProperty("kafka_url", DEFAULT_KAFKA_URL);
         kafkaProducer = new MessageProducer(kafkaUrl, kafkaTopic);
@@ -119,8 +116,9 @@ public class KafkaDataGenerator {
                 kafkaProducer.sendMessage(kafkaTopic, SensorEventParser.getSensorEventAsJsonString(event));
             }
             if(streamingFlag.equalsIgnoreCase("y")){
-                System.out.println("******************Waiting for  "+ streamingIntervalMin +" minutes before ir can produce again ******************" );
-                TimeUnit.MINUTES.sleep(streamingIntervalMin);
+                System.out.println("******************Waiting for  "+ streamingIntervalSec +" seconds before it can produce again ******************" );
+                TimeUnit.SECONDS.sleep(streamingIntervalSec);
+                System.out.println("******************Generating events ******************" );
             }
 
         }while (streamingFlag.equalsIgnoreCase("y"));
